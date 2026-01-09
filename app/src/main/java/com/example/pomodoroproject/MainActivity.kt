@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private var countDownTimer: CountDownTimer? = null
     private var isRunning = false
     private var isWorkSession = true
+    private var isWaitingForBreak = false
 
     private var workTimeMillis = 25 * 60 * 1000L
     private var breakTimeMillis = 5 * 60 * 1000L
@@ -55,10 +56,10 @@ class MainActivity : AppCompatActivity() {
         updateTimerColor()
 
         btnStartPause.setOnClickListener {
-            if (isRunning) {
-                pauseTimer()
-            } else {
-                startTimer()
+            when {
+                isRunning -> pauseTimer()
+                isPaused -> resumeTimer()
+                else -> startTimer()
             }
         }
 
@@ -118,6 +119,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onFinish() {
                 isRunning = false
+                isPaused = false
                 btnStartPause.text = "Start"
                 timeLeftMillis = 0
                 updateTimerText()
@@ -137,18 +139,25 @@ class MainActivity : AppCompatActivity() {
         }.start()
 
         isRunning = true
+        isPaused = false
         btnStartPause.text = "Pause"
     }
 
     private fun pauseTimer() {
         countDownTimer?.cancel()
         isRunning = false
-        btnStartPause.text = "Start"
+        isPaused = true
+        btnStartPause.text = "Resume"
+    }
+
+    private fun resumeTimer() {
+        startTimer()
     }
 
     private fun resetTimer() {
         countDownTimer?.cancel()
         isRunning = false
+        isPaused = false
 
 
 
@@ -165,6 +174,7 @@ class MainActivity : AppCompatActivity() {
     private fun switchSession() {
         countDownTimer?.cancel()
         isRunning = false
+        isPaused = false
 
 
 
