@@ -33,8 +33,12 @@ class MainActivity : AppCompatActivity() {
     private var isWorkSession = true
     private var isWaitingForBreak = false
 
+    private var completedPomodoros = 0
+    private var isLongBreak = false
+
     private var workTimeMillis = 25 * 60 * 1000L
     private var breakTimeMillis = 5 * 60 * 1000L
+    private var longBreakTimeMillis = 15 * 60 * 1000L // 15 minuta po defaultu
     private var timeLeftMillis = workTimeMillis
 
 
@@ -59,6 +63,10 @@ class MainActivity : AppCompatActivity() {
             when {
                 isRunning -> pauseTimer()
                 isPaused -> resumeTimer()
+                isWaitingForBreak -> {
+                    isWaitingForBreak = false
+                    startTimer()
+                }
                 else -> startTimer()
             }
         }
@@ -120,12 +128,39 @@ class MainActivity : AppCompatActivity() {
             override fun onFinish() {
                 isRunning = false
                 isPaused = false
-                btnStartPause.text = "Start"
                 timeLeftMillis = 0
                 updateTimerText()
 
                 if (isWorkSession) {
                     incrementCompletedSessions()
+                    completedPomodoros++
+
+                    isLongBreak = completedPomodoros % 4 == 0
+
+                    // Spremanje break-a
+                    isWorkSession = false
+                    timeLeftMillis = if (isLongBreak) {
+                        longBreakTimeMillis
+                    } else {
+                        breakTimeMillis
+                    }
+                    updateTimerColor()
+                    updateTimerText()
+
+                    isWaitingForBreak = true
+                    btnStartPause.text = if (isLongBreak) "Start Long Break" else "Start Break"
+
+                } else {
+                    // Break zavrsen
+                    isWorkSession = true
+                    isWaitingForBreak = false
+                    isLongBreak = false
+                    timeLeftMillis = workTimeMillis
+                    updateTimerColor()
+                    updateTimerText()
+
+                    btnStartPause.text = "Start"
+
                 }
             }
 
@@ -158,6 +193,9 @@ class MainActivity : AppCompatActivity() {
         countDownTimer?.cancel()
         isRunning = false
         isPaused = false
+        isWaitingForBreak = false
+        completedPomodoros = 0
+        isLongBreak = false
 
 
 
@@ -175,6 +213,8 @@ class MainActivity : AppCompatActivity() {
         countDownTimer?.cancel()
         isRunning = false
         isPaused = false
+        isWaitingForBreak = false
+        isLongBreak = false
 
 
 
@@ -188,10 +228,10 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun updateTimerColor() {
-        val colorRes = if (isWorkSession) {
-            R.color.work_red
-        } else {
-            R.color.break_green
+        val colorRes = when {
+            isWorkSession -> R.color.work_red
+            isLongBreak -> R.color.long_break_blue
+            else -> R.color.break_green
         }
         timerCard.setCardBackgroundColor(
             ContextCompat.getColor(this, colorRes)
