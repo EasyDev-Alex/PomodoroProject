@@ -104,15 +104,32 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+
         loadSettings()
 
-        if (!isRunning) {
-            timeLeftMillis = if (isWorkSession) workTimeMillis else breakTimeMillis
+        val restored = restoreTimerState()
+
+        if (!isRunning && !restored) {
+            timeLeftMillis = when {
+                isWorkSession -> workTimeMillis
+                isLongBreak -> longBreakTimeMillis
+                else -> breakTimeMillis
+            }
 
             updateSessionLabel()
             updateTimerText()
             updateTimerColor()
+
+            if (isRunning) {
+                startTimer()
+            }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        saveTimerState()
+
     }
 
 
@@ -198,11 +215,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun resetTimer() {
         countDownTimer?.cancel()
+
         isRunning = false
         isPaused = false
         isWaitingForBreak = false
 
-
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        prefs.edit().remove("time_left").apply()
 
         timeLeftMillis = when {
             isWorkSession -> workTimeMillis
@@ -228,6 +247,7 @@ class MainActivity : AppCompatActivity() {
         isWorkSession = !isWorkSession
         timeLeftMillis = if (isWorkSession) workTimeMillis else breakTimeMillis
 
+        animateSessionChange()
         updateSessionLabel()
         updateTimerText()
         updateTimerColor()
@@ -249,7 +269,20 @@ class MainActivity : AppCompatActivity() {
     private fun updateTimerText() {
         val minutes = (timeLeftMillis / 1000) / 60
         val seconds = (timeLeftMillis / 1000) % 60
-        tvTimer.text = String.format("%02d:%02d", minutes, seconds)
+
+        val newText = String.format("%02d:%02d", minutes, seconds)
+
+        if (tvTimer.text != newText) {
+            tvTimer.animate()
+                .alpha(0.7f)
+                .setDuration(80)
+                .withEndAction {
+                    tvTimer.text = newText
+                    tvTimer.animate()
+                        .alpha(1f)
+                        .setDuration(80)
+                }
+        }
     }
 
     private fun updateSessionLabel() {
@@ -266,6 +299,59 @@ class MainActivity : AppCompatActivity() {
             )
         )
     }
+
+    private fun saveTimerState() {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        prefs.edit()
+            .putLong("time_left", timeLeftMillis)
+            .putBoolean("is_running", isRunning)
+            .putBoolean("is_paused", isPaused)
+            .putBoolean("is_work_session", isWorkSession)
+            .putBoolean("is_long_break", isLongBreak)
+            .putInt("completed_pomodoros", completedPomodoros)
+            .apply()
+    }
+
+    private fun restoreTimerState(): Boolean {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+
+        if (!prefs.contains("time_left")) return false
+
+        timeLeftMillis = prefs.getLong("time_left", timeLeftMillis)
+        isRunning = prefs.getBoolean("is_running", false)
+        isPaused = prefs.getBoolean("is_paused", false)
+        isWorkSession = prefs.getBoolean("is_work_session", true)
+        isLongBreak = prefs.getBoolean("is_long_break", false)
+        completedPomodoros = prefs.getInt("completed_pomodoros", 0)
+
+        return true
+
+    }
+
+    private fun animateSessionChange() {
+        tvSessionType.animate()
+            .alpha(0f)
+            .setDuration(150)
+            .withEndAction {
+                updateSessionLabel()
+                tvSessionType.animate()
+                    .alpha(1f)
+                    .setDuration(150)
+            }
+
+        timerCard.animate()
+            .scaleX(1.03f)
+            .scaleY(1.03f)
+            .setDuration(150)
+            .withEndAction {
+                timerCard.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(150)
+            }
+    }
+
+
 }
 
 
