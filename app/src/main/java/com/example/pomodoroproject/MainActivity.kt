@@ -18,6 +18,7 @@ class MainActivity : AppCompatActivity() {
         const val PREFS_NAME = "pomodoro_prefs"
         const val KEY_WORK = "work_minutes"
         const val KEY_BREAK = "break_minutes"
+        const val KEY_LONG_BREAK = "long_break_minutes"
     }
 
     private lateinit var tvTimer: TextView
@@ -115,6 +116,7 @@ class MainActivity : AppCompatActivity() {
 
         workTimeMillis = prefs.getInt(KEY_WORK, 25) * 60 * 1000L
         breakTimeMillis = prefs.getInt(KEY_BREAK, 5) * 60 * 1000L
+        longBreakTimeMillis = prefs.getInt(KEY_LONG_BREAK, 15) * 60 * 1000L
 
     }
 
@@ -194,15 +196,13 @@ class MainActivity : AppCompatActivity() {
         isRunning = false
         isPaused = false
         isWaitingForBreak = false
-        completedPomodoros = 0
-        isLongBreak = false
 
 
 
-        timeLeftMillis = if (isWorkSession) {
-            workTimeMillis
-        } else {
-            breakTimeMillis
+        timeLeftMillis = when {
+            isWorkSession -> workTimeMillis
+            isLongBreak -> longBreakTimeMillis
+            else -> breakTimeMillis
         }
 
         btnStartPause.text = "Start"
