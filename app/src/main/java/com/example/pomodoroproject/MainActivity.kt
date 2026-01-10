@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var tvTimer: TextView
+    private lateinit var tvSessionType: TextView
     private lateinit var btnStartPause: Button
     private lateinit var btnReset: Button
     private lateinit var timerCard: CardView
@@ -51,12 +52,14 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
         tvTimer = findViewById(R.id.tvTimer)
+        tvSessionType = findViewById(R.id.tvSessionType)
         btnStartPause = findViewById(R.id.btnStartPause)
         btnReset = findViewById(R.id.btnReset)
         timerCard = findViewById(R.id.timerCard)
         btnSettings = findViewById(R.id.btnSettings)
         btnStats = findViewById(R.id.btnStats)
 
+        updateSessionLabel()
         updateTimerText()
         updateTimerColor()
 
@@ -105,6 +108,8 @@ class MainActivity : AppCompatActivity() {
 
         if (!isRunning) {
             timeLeftMillis = if (isWorkSession) workTimeMillis else breakTimeMillis
+
+            updateSessionLabel()
             updateTimerText()
             updateTimerColor()
         }
@@ -206,6 +211,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnStartPause.text = "Start"
+
+        updateSessionLabel()
         updateTimerText()
     }
 
@@ -221,6 +228,7 @@ class MainActivity : AppCompatActivity() {
         isWorkSession = !isWorkSession
         timeLeftMillis = if (isWorkSession) workTimeMillis else breakTimeMillis
 
+        updateSessionLabel()
         updateTimerText()
         updateTimerColor()
         btnStartPause.text = "Start"
@@ -242,6 +250,21 @@ class MainActivity : AppCompatActivity() {
         val minutes = (timeLeftMillis / 1000) / 60
         val seconds = (timeLeftMillis / 1000) % 60
         tvTimer.text = String.format("%02d:%02d", minutes, seconds)
+    }
+
+    private fun updateSessionLabel() {
+        tvSessionType.text = when {
+            isWorkSession -> "Work Session"
+            isLongBreak -> "Long Break"
+            else -> "Break"
+        }
+
+        tvSessionType.setTextColor(
+            ContextCompat.getColor(
+                this,
+                 if (isWorkSession) R.color.work_red else R.color.break_green
+            )
+        )
     }
 }
 
