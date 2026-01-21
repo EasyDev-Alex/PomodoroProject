@@ -63,6 +63,9 @@ class SettingsActivity : AppCompatActivity() {
             .putInt(MainActivity.KEY_WORK, workMinutes)
             .putInt(MainActivity.KEY_BREAK, breakMinutes)
             .putInt(MainActivity.KEY_LONG_BREAK, longBreakMinutes)
+            .remove("time_left")
+            .remove("is_running")
+            .remove("is_paused")
             .apply()
 
         finish() // vraća na MainActivity

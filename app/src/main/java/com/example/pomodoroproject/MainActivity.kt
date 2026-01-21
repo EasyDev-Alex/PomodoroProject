@@ -50,6 +50,9 @@ class MainActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
 
+
+        loadSettings()
+
         setContentView(R.layout.activity_main)
         tvTimer = findViewById(R.id.tvTimer)
         tvSessionType = findViewById(R.id.tvSessionType)
@@ -59,9 +62,7 @@ class MainActivity : AppCompatActivity() {
         btnSettings = findViewById(R.id.btnSettings)
         btnStats = findViewById(R.id.btnStats)
 
-        updateSessionLabel()
-        updateTimerText()
-        updateTimerColor()
+
 
         btnStartPause.setOnClickListener {
             when {
@@ -120,9 +121,6 @@ class MainActivity : AppCompatActivity() {
             updateTimerText()
             updateTimerColor()
 
-            if (isRunning) {
-                startTimer()
-            }
         }
     }
 
@@ -139,6 +137,14 @@ class MainActivity : AppCompatActivity() {
         workTimeMillis = prefs.getInt(KEY_WORK, 25) * 60 * 1000L
         breakTimeMillis = prefs.getInt(KEY_BREAK, 5) * 60 * 1000L
         longBreakTimeMillis = prefs.getInt(KEY_LONG_BREAK, 15) * 60 * 1000L
+
+        if (!isRunning && !isPaused) {
+            timeLeftMillis = when {
+                isWorkSession -> workTimeMillis
+                isLongBreak -> longBreakTimeMillis
+                else -> breakTimeMillis
+            }
+        }
 
     }
 
